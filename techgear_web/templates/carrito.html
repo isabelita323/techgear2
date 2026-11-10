@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Carrito · TechGear Beauty{% endblock %}
+{% block content %}
+<header class="header-mark">
+  <div>
+    <h1 id="carrito-titulo">Tu carrito</h1>
+    <p>Revisa las cantidades y confirma tu dirección de envío.</p>
+  </div>
+</header>
+
+{% if items %}
+  <section aria-labelledby="carrito-titulo">
+    {% for item in items %}
+      <article class="card" style="margin-bottom:16px;padding:18px">
+        {% if item.error %}
+          <p>{{ item.error }}</p>
+          <form method="post" action="{% url 'carrito_eliminar' item.id %}">
+            {% csrf_token %}
+            <button class="btn danger" type="submit">Quitar del carrito</button>
+          </form>
+        {% else %}
+          <h2>{{ item.nombre }}</h2>
+          <p>${{ item.precio|floatformat:"0g" }} por unidad</p>
+          <form method="post" action="{% url 'carrito_actualizar' %}" class="card-actions">
+            {% csrf_token %}
+            <input type="hidden" name="producto_id" value="{{ item.id }}">
+            <label>
+              Cantidad
+              <input type="number" name="cantidad" value="{{ item.quantity }}" min="1" max="{{ item.stock }}" required>
+            </label>
+            <button type="submit">Actualizar</button>
+          </form>
+          <p>Subtotal: <strong>${{ item.subtotal|floatformat:"0g" }}</strong></p>
+          <form method="post" action="{% url 'carrito_eliminar' item.id %}">
+            {% csrf_token %}
+            <button class="btn danger" type="submit">Quitar del carrito</button>
+          </form>
+        {% endif %}
+      </article>
+    {% endfor %}
+  </section>
+  <p class="precio">Total: ${{ total|floatformat:"0g" }}</p>
+  {% if request.session.token %}
+    <form method="post" action="{% url 'carrito_confirmar' %}" class="product-form">
+      {% csrf_token %}
+      <label for="direccion-envio">Dirección de envío</label>
+      <textarea id="direccion-envio" name="direccion_envio" minlength="5" required></textarea>
+      <button type="submit" class="submit-btn">Confirmar compra</button>
+    </form>
+  {% else %}
+    <p>Para confirmar tu compra, <a href="{% url 'login' %}">inicia sesión</a>. Tu carrito se conservará.</p>
+  {% endif %}
+{% else %}
+  <p>Tu carrito está vacío. <a href="{% url 'catalogo' %}">Explora los productos</a>.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Catálogo · TechGear Beauty{% endblock %}
+{% block content %}
+<header class="header-mark">
+  <div>
+    <h1 id="catalogo-titulo">Beauty essentials</h1>
+    <p>Descubre maquillaje, cuidado y productos que realzan tu look con brillo y elegancia.</p>
+  </div>
+  <span class="mini-badge" aria-label="Colección disponible">Colección rosa</span>
+</header>
+<div class="toolbar">
+  <form method="get" aria-label="Filtrar productos por categoría">
+    <label for="categoria-filtro" class="sr-only">Filtrar por categoría</label>
+    <input id="categoria-filtro" name="categoria" value="{{ categoria }}" placeholder="Filtrar por categoría" aria-label="Filtrar por categoría">
+    <button type="submit">Filtrar</button>
+  </form>
+  {% if request.session.usuario and request.session.usuario.rol == "administrador" %}
+    <a class="btn" href="{% url 'producto_nuevo' %}">Nuevo producto</a>
+  {% endif %}
+</div>
+<section class="grid" aria-labelledby="catalogo-titulo">
+  {% for p in productos %}
+  <article class="card">
+    {% static 'store/productos/paleta-tonos.jpg' as imagen_default %}
+    <img src="{{ p.imagen_url|default:imagen_default }}" alt="{{ p.nombre }}" width="800" height="520" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='{{ imagen_default }}';">
+    <div class="info">
+      <span class="tag">{{ p.categoria }}</span>
+      <h3>{{ p.nombre }}</h3>
+      <p>{{ p.descripcion }}</p>
+      <p class="precio">${{ p.precio|floatformat:"0g" }}</p>
+      <small>{% if p.stock > 0 %}{{ p.stock }} disponibles{% else %}Agotado{% endif %}</small>
+      <div class="card-actions">
+        {% if p.stock > 0 %}
+          <form method="post" action="{% url 'carrito_agregar' p.id %}">
+            {% csrf_token %}
+            <label>
+              <span class="sr-only">Cantidad de {{ p.nombre }}</span>
+              <input type="number" name="cantidad" value="1" min="1" max="{{ p.stock }}" required>
+            </label>
+            <button type="submit">Agregar al carrito</button>
+          </form>
+        {% endif %}
+        {% if request.session.usuario and request.session.usuario.rol == "administrador" %}
+          <label>
+            <input type="checkbox" form="selected-products-form" name="producto_ids" value="{{ p.id }}" class="product-selection">
+            Seleccionar
+          </label>
+        {% endif %}
+      </div>
+    </div>
+  </article>
+  {% empty %}
+  <p>No hay productos para mostrar.</p>
+  {% endfor %}
+</section>
+{% if request.session.usuario and request.session.usuario.rol == "administrador" and productos %}
+  <form method="post" action="{% url 'productos_seleccionados' %}" id="selected-products-form">
+    {% csrf_token %}
+  <div class="toolbar" aria-label="Acciones para productos seleccionados">
+    <span id="selection-count" aria-live="polite">0 seleccionados</span>
+    <div class="card-actions">
+      <button type="submit" form="selected-products-form" name="action" value="edit" id="edit-selected" disabled>Editar seleccionado</button>
+      <button type="submit" form="selected-products-form" name="action" value="delete" id="delete-selected" disabled>Eliminar seleccionados</button>
+    </div>
+  </div>
+  </form>
+<script>
+  const selectionForm = document.getElementById("selected-products-form");
+  const selectionBoxes = [...document.querySelectorAll('.product-selection[form="selected-products-form"]')];
+  const selectionCount = document.getElementById("selection-count");
+  const editSelected = document.getElementById("edit-selected");
+  const deleteSelected = document.getElementById("delete-selected");
+
+  function updateSelectionActions() {
+    const selectedCount = selectionBoxes.filter(box => box.checked).length;
+    selectionCount.textContent = `${selectedCount} seleccionado${selectedCount === 1 ? "" : "s"}`;
+    editSelected.disabled = selectedCount !== 1;
+    deleteSelected.disabled = selectedCount === 0;
+  }
+
+  selectionBoxes.forEach(box => box.addEventListener("change", updateSelectionActions));
+  selectionForm.addEventListener("submit", event => {
+    if (event.submitter.value === "delete" &&
+        !confirm("¿Eliminar los productos seleccionados? Esta acción no se puede deshacer.")) {
+      event.preventDefault();
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

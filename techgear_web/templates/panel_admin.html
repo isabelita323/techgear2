@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Panel admin · TechGear{% endblock %}
+{% block content %}
+<h1>Panel de administración</h1>
+<p>Bienvenido, {{ request.session.usuario.nombre }}. Aquí se gestionarán los productos.</p>
+<a class="btn" href="{% url 'catalogo' %}">Ver catálogo</a>
+<a class="btn" href="{% url 'producto_nuevo' %}">Agregar producto</a>
+{% endblock %}
