@@ -1,0 +1,24 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Secretos
+.env
+*.env
+!.env.example
+
+# Django
+db.sqlite3
+staticfiles/
+media/
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
